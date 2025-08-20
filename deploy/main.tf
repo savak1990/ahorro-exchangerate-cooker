@@ -45,7 +45,7 @@ terraform {
   backend "s3" {
     bucket = "ahorro-app-state"
     ### Please update "savak" to your user name if you're going to try deploying this yourself
-    key            = "dev/ahorro-exchangerate-cooker/savak/terraform.tfstate"
+    key            = "dev/exchangerate-cooker/savak/terraform.tfstate"
     region         = "eu-west-1"
     dynamodb_table = "ahorro-app-state-lock"
     encrypt        = true
