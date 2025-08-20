@@ -5,7 +5,7 @@ provider "aws" {
     tags = {
       Environment = "dev"
       Project     = "ahorro-app"
-      Service     = "ahorro-exchange-rate-cooker"
+      Service     = "ahorro-exchangerate-cooker"
       Terraform   = "true"
     }
   }
@@ -37,9 +37,8 @@ module "exchange_rate_cooker" {
   app_s3_bucket_name      = local.s3_bucket_name
   app_s3_artifact_zip_key = local.s3_key
   exchange_rate_api_key   = jsondecode(data.aws_secretsmanager_secret_version.ahorro_app.secret_string)["exchange_rate_api_key"]
-  # schedule_expression     = "cron(10 0 * * ? *)" // Once a day at 00:10 UTC - COMMENTED OUT FOR TESTING
-  schedule_expression  = "rate(5 minutes)" // Every 5 minutes for testing
-  supported_currencies = ["USD", "JPY", "CAD", "AUD", "CNY", "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "UAH", "BYN", "RUB"]
+  schedule_expression     = "cron(10 0 * * ? *)" // Once a day at 00:10 UTC
+  supported_currencies    = ["USD", "JPY", "CAD", "AUD", "CNY", "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "UAH", "BYN", "RUB"]
 }
 
 terraform {
