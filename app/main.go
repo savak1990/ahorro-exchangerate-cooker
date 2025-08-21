@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,6 +30,7 @@ type ExchangeRateRecord struct {
 	SortKey       string             `dynamodbav:"SortKey"`
 	ExchangeRates map[string]float64 `dynamodbav:"ExchangeRates"`
 	UpdatedAt     time.Time          `dynamodbav:"UpdatedAt"`
+	ExpiresAt     int64              `dynamodbav:"ExpiresAt"`
 }
 
 type SupportedCurrenciesRecord struct {
@@ -36,6 +38,7 @@ type SupportedCurrenciesRecord struct {
 	SortKey             string    `dynamodbav:"SortKey"`
 	SupportedCurrencies []string  `dynamodbav:"SupportedCurrencies"`
 	UpdatedAt           time.Time `dynamodbav:"UpdatedAt"`
+	ExpiresAt           time.Time `dynamodbav:"ExpiresAt"`
 }
 
 var (
@@ -43,6 +46,7 @@ var (
 	tableName           string
 	apiKey              string
 	supportedCurrencies []string
+	ttlIntervalDays     int
 )
 
 func init() {
@@ -75,6 +79,18 @@ func init() {
 	tableName = os.Getenv("EXCHANGE_RATE_DB_NAME")
 	apiKey = os.Getenv("EXCHANGE_RATE_API_KEY")
 
+	// Parse TTL interval days
+	ttlIntervalDaysStr := os.Getenv("TTL_INTERVAL_DAYS")
+	if ttlIntervalDaysStr != "" {
+		var err error
+		ttlIntervalDays, err = strconv.Atoi(ttlIntervalDaysStr)
+		if err != nil {
+			logrus.WithError(err).Fatal("TTL_INTERVAL_DAYS must be a valid integer")
+		}
+	} else {
+		ttlIntervalDays = 30 // Default to 30 days
+	}
+
 	// Parse supported currencies from environment variable
 	supportedCurrenciesStr := os.Getenv("SUPPORTED_CURRENCIES")
 	if supportedCurrenciesStr != "" {
@@ -93,6 +109,7 @@ func init() {
 		"supported_currencies": supportedCurrencies,
 		"currencies_count":     len(supportedCurrencies),
 		"api_key_configured":   apiKey != "",
+		"ttl_interval_days":    ttlIntervalDays,
 	}).Info("Exchange rate cooker initialized")
 }
 
@@ -263,11 +280,15 @@ func checkExistingExchangeRates(baseCurrency, date string) (*ExchangeRateRecord,
 }
 
 func storeExchangeRates(baseCurrency, date string, rates *ExchangeRateResponse) error {
+	// Calculate expiration time: current time + TTL interval in days
+	expiresAt := time.Now().AddDate(0, 0, ttlIntervalDays).Unix()
+
 	record := ExchangeRateRecord{
 		Key:           baseCurrency,
 		SortKey:       date,
 		ExchangeRates: rates.ConversionRates,
 		UpdatedAt:     time.Now(),
+		ExpiresAt:     expiresAt,
 	}
 
 	item, err := attributevalue.MarshalMap(record)
@@ -288,6 +309,8 @@ func storeExchangeRates(baseCurrency, date string, rates *ExchangeRateResponse) 
 		"date":        date,
 		"rates_count": len(rates.ConversionRates),
 		"table":       tableName,
+		"expires_at":  time.Unix(record.ExpiresAt, 0).Format(time.RFC3339),
+		"ttl_days":    ttlIntervalDays,
 	}).Debug("Successfully stored exchange rates to DynamoDB")
 	return nil
 }

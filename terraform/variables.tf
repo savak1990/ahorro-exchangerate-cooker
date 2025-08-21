@@ -31,3 +31,9 @@ variable "supported_currencies" {
   type        = list(string)
   default     = ["USD", "JPY", "CAD", "AUD", "CNY", "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "UAH", "BYN", "RUB"]
 }
+
+variable "ttl_interval_days" {
+  description = "Time to live (TTL) interval in days"
+  type        = number
+  default     = 30
+}

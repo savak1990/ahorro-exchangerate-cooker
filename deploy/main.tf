@@ -39,6 +39,7 @@ module "exchange_rate_cooker" {
   exchange_rate_api_key   = jsondecode(data.aws_secretsmanager_secret_version.ahorro_app.secret_string)["exchange_rate_api_key"]
   schedule_expression     = "cron(10 0 * * ? *)" // Once a day at 00:10 UTC
   supported_currencies    = ["USD", "JPY", "CAD", "AUD", "CNY", "EUR", "GBP", "CHF", "SEK", "NOK", "DKK", "PLN", "CZK", "HUF", "RON", "UAH", "BYN", "RUB"]
+  ttl_interval_days       = 30
 }
 
 terraform {

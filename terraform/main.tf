@@ -27,6 +27,11 @@ resource "aws_dynamodb_table" "exchange_rate_db" {
 
   hash_key  = "Key"
   range_key = "SortKey"
+
+  ttl {
+    enabled        = true
+    attribute_name = "ExpiresAt"
+  }
 }
 
 # Lambda function
@@ -46,6 +51,7 @@ resource "aws_lambda_function" "exchange_rate_cooker" {
       EXCHANGE_RATE_DB_NAME = aws_dynamodb_table.exchange_rate_db.name
       EXCHANGE_RATE_API_KEY = var.exchange_rate_api_key
       SUPPORTED_CURRENCIES  = join("|", var.supported_currencies)
+      TTL_INTERVAL_DAYS     = var.ttl_interval_days
     }
   }
 
