@@ -247,8 +247,8 @@ func fetchExchangeRates(baseCurrency string) (*ExchangeRateResponse, error) {
 
 func checkExistingExchangeRates(baseCurrency, date string) (*ExchangeRateRecord, error) {
 	key := map[string]interface{}{
-		"Key":     baseCurrency,
-		"SortKey": date,
+		"Key":     date,
+		"SortKey": baseCurrency,
 	}
 
 	keyItem, err := attributevalue.MarshalMap(key)
@@ -284,8 +284,8 @@ func storeExchangeRates(baseCurrency, date string, rates *ExchangeRateResponse) 
 	expiresAt := time.Now().AddDate(0, 0, ttlIntervalDays).Unix()
 
 	record := ExchangeRateRecord{
-		Key:           baseCurrency,
-		SortKey:       date,
+		Key:           date,
+		SortKey:       baseCurrency,
 		ExchangeRates: rates.ConversionRates,
 		UpdatedAt:     time.Now(),
 		ExpiresAt:     expiresAt,
